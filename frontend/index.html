@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Project & Team Management System</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <div class="brand-text">
+          <h1>ApexPlan Pro</h1>
+          <span>Project & Team Manager</span>
+        </div>
+      </div>
+
+      <ul class="nav-links">
+        <li class="nav-item active" data-view="dashboard">
+          <a href="#dashboard" onclick="navigate('dashboard')">
+            <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="projects">
+          <a href="#projects" onclick="navigate('projects')">
+            <i class="fa-solid fa-folder-tree"></i><span>Projects</span>
+            <span class="nav-badge" id="badge-projects">0</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="tasks">
+          <a href="#tasks" onclick="navigate('tasks')">
+            <i class="fa-solid fa-list-check"></i><span>Tasks</span>
+            <span class="nav-badge" id="badge-tasks">0</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="team">
+          <a href="#team" onclick="navigate('team')">
+            <i class="fa-solid fa-users"></i><span>Team & Users</span>
+          </a>
+        </li>
+        <li class="nav-item" data-view="activity">
+          <a href="#activity" onclick="navigate('activity')">
+            <i class="fa-solid fa-clock-rotate-left"></i><span>Activity Logs</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-user">
+        <div class="avatar" id="sidebar-avatar">U</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-user-name">Loading...</div>
+          <div class="user-role" id="sidebar-user-role">Member</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="logout()" title="Logout" style="padding: 6px 8px;">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+          <h2 class="current-view-title" id="view-title">Dashboard Overview</h2>
+        </div>
+        <div class="topbar-right">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Quick Role Switch:</label>
+            <select class="quick-switch-select" id="quick-role-select" onchange="quickSwitchUser(this.value)">
+              <option value="admin@example.com:admin123">Admin (Alice)</option>
+              <option value="pm@example.com:manager123">Project Manager (Bob)</option>
+              <option value="dev1@example.com:dev123">Team Member (Charlie)</option>
+              <option value="dev2@example.com:dev123">Team Member (Diana)</option>
+            </select>
+          </div>
+          <a href="/docs" target="_blank" class="btn btn-outline btn-sm"><i class="fa-solid fa-book"></i> API Docs</a>
+        </div>
+      </header>
+
+      <main class="page-content" id="content-area"></main>
+    </div>
+  </div>
+
+  <!-- Project Modal -->
+  <div class="modal-overlay" id="modal-project">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-project-title">Create New Project</h3>
+        <button class="modal-close" onclick="closeModal('modal-project')">&times;</button>
+      </div>
+      <form id="project-form" onsubmit="handleSaveProject(event)">
+        <input type="hidden" id="project-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="proj-name">Project Name *</label>
+            <input type="text" id="proj-name" class="form-control" placeholder="e.g. Mobile Application v2" required>
+          </div>
+          <div class="form-group">
+            <label for="proj-desc">Description</label>
+            <textarea id="proj-desc" class="form-control" placeholder="Provide an overview of objectives..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="proj-status">Status</label>
+            <select id="proj-status" class="form-control">
+              <option value="Planning">Planning</option>
+              <option value="In Progress">In Progress</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="proj-start">Start Date</label>
+              <input type="date" id="proj-start" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="proj-end">End Date</label>
+              <input type="date" id="proj-end" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-project')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-project">Save Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div class="modal-overlay" id="modal-task">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-task-title">Create New Task</h3>
+        <button class="modal-close" onclick="closeModal('modal-task')">&times;</button>
+      </div>
+      <form id="task-form" onsubmit="handleSaveTask(event)">
+        <input type="hidden" id="task-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="task-title">Task Title *</label>
+            <input type="text" id="task-title" class="form-control" placeholder="e.g. Implement OAuth Flow" required>
+          </div>
+          <div class="form-group">
+            <label for="task-desc">Description</label>
+            <textarea id="task-desc" class="form-control" placeholder="Detail specifications..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="task-project">Project *</label>
+            <select id="task-project" class="form-control" required></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="task-status">Status</label>
+              <select id="task-status" class="form-control">
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Review">Review</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="task-priority">Priority</label>
+              <select id="task-priority" class="form-control">
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group">
+              <label for="task-assignee">Assignee</label>
+              <select id="task-assignee" class="form-control">
+                <option value="">Unassigned</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="task-deadline">Deadline</label>
+              <input type="date" id="task-deadline" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-task')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-task">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Modal -->
+  <div class="modal-overlay" id="modal-user">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-user-title">Add New User</h3>
+        <button class="modal-close" onclick="closeModal('modal-user')">&times;</button>
+      </div>
+      <form id="user-form" onsubmit="handleSaveUser(event)">
+        <input type="hidden" id="user-edit-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="u-name">Full Name *</label>
+            <input type="text" id="u-name" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="u-email">Email Address *</label>
+            <input type="email" id="u-email" class="form-control" required>
+          </div>
+          <div class="form-group" id="group-u-password">
+            <label for="u-password">Password *</label>
+            <input type="password" id="u-password" class="form-control" minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="u-role">Role</label>
+            <select id="u-role" class="form-control">
+              <option value="Admin">Admin</option>
+              <option value="Project Manager">Project Manager</option>
+              <option value="Team Member" selected>Team Member</option>
+            </select>
+          </div>
+          <div class="form-group" id="group-u-active" style="display: none;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="u-active" checked>
+              <span>User is Active</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-user')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Assign Members Modal -->
+  <div class="modal-overlay" id="modal-assign-members">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Assign Team Members</h3>
+        <button class="modal-close" onclick="closeModal('modal-assign-members')">&times;</button>
+      </div>
+      <form id="assign-members-form" onsubmit="handleSaveProjectMembers(event)">
+        <input type="hidden" id="assign-proj-id">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">Select members to assign:</p>
+          <div id="assign-members-checklist" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-assign-members')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Assignments</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Details & Comments Drawer -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeTaskDrawer()"></div>
+  <aside class="drawer" id="task-drawer">
+    <div class="drawer-header">
+      <h3 id="drawer-task-title">Task Details</h3>
+      <button class="modal-close" onclick="closeTaskDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay" id="modal-login">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3>Sign In to ApexPlan</h3>
+      </div>
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" class="form-control" value="admin@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-control" value="admin123" required>
+          </div>
+          <div id="login-error" style="color: var(--danger); font-size: 0.85rem; margin-top: 8px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
